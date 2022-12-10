@@ -3,7 +3,7 @@ const MongoClient = require('mongodb').MongoClient;
 const mongoose = require('mongoose');
 const conn = mongoose.createConnection(
 
-    'mongodb://localhost:27017/ra', {
+    'mongodb://localhost:27017/zhongchou', {
       serverSelectionTimeoutMS: 60000,
     
     bufferCommands: false,
@@ -23,17 +23,22 @@ conn.on('err', (err) => {
 conn.on('close', () => {
   console.log('mongo disconnected!');
 })
-let Unischema=new mongoose.Schema({
-  name:String,
+let Proschema=new mongoose.Schema({
+  
   url:String,
-  town:String
+  title:String,
+  goal:String,
+  backer:String,
+  percent:String,
+  people:String,
+  src:Array,
+  
 })
 
   
 
-let Movieuser=conn.model('Movieuser',Unischema);
+let Project=conn.model('Project',Proschema);
 module.exports = {
   conn: conn,
- 
-
+  Project:Project
 };
