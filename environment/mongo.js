@@ -23,6 +23,15 @@ conn.on('err', (err) => {
 conn.on('close', () => {
   console.log('mongo disconnected!');
 })
+let Comschema=new mongoose.Schema({
+  
+  
+  title:String,
+  time:String,
+  content:String,
+  url:String
+  
+})
 let Proschema=new mongoose.Schema({
   
   url:String,
@@ -36,9 +45,10 @@ let Proschema=new mongoose.Schema({
 })
 
   
-
+let Comment=conn.model('Comment',Comschema);
 let Project=conn.model('Project',Proschema);
 module.exports = {
   conn: conn,
-  Project:Project
+  Project:Project,
+  Comment:Comment
 };

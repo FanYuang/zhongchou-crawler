@@ -140,22 +140,102 @@ app.get("/getpic",(req, res) => {
 })
   
 app.get("/getcom",(req, res) => {  
-    (async () => {
+    async function get(num){
+        let doc=await mongo.Project.findOne({}).skip(num);
+        console.log(doc.title,num);
+        let url=doc.url.split("/");
+        let n=url.pop();
+        let link=url.join("/")+"/comment/"+n.split(".")[0];
+        console.log(link)
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
-        await page.goto('https://zhongchou.modian.com/item/122036.html');
+        await page.goto(link);
+        //await page.waitForSelector(".next");
+        await page.waitForTimeout(2000);
+        let html=await page.content();
+        $ = cheerio.load(html);
       
-        const dimensions = await page.evaluate(() => {
-          return {
-            width: document.documentElement.clientWidth,
-            height: document.documentElement.clientHeight,
-            deviceScaleFactor: window.devicePixelRatio
-          };
-        });
-      
-        console.log('Dimensions:', dimensions);
-      
+        let title=$('.short-cut').find('.title').text();
+        
+        
+        
+        if($('.sub-comment-more').html()!=null)
+            {
+                await page.click(".sub-comment-more");
+                await page.waitForTimeout(2000);
+                html=await page.content();
+                $ = cheerio.load(html);
+            }
+        await Promise.all($(".comment-list").each(function(i, elem) {
+            let obj={};
+            obj.time=$(this).find(".time").text();
+            obj.content=$(this).find(".comment-txt").text();
+            obj.title=doc.title;
+            obj.url=doc.url;
+            let data = new mongo.Comment(obj);
+            data.save();
+        }))
+        await Promise.all($(".sub-comment").each(function(i, elem) {
+            $(this).children().each(function(j, el) {
+                let obj={};
+                obj.time=$(el).find(".sub-time").text();
+                obj.content=$(el).find(".sub-comment-txt").text();
+                obj.title=doc.title;
+                obj.url=doc.url;
+                let data = new mongo.Comment(obj);
+                data.save();
+                
+            })
+            
+        }))
+        while($(".pagination-wrap").find('.next').prev().attr("class")!="current")
+        {
+           
+            console.log($(".comment-list").first().find(".comment-txt").text(),$(".pagination-wrap").find('.next').prev().text());
+            await page.click(".next");
+            await page.waitForTimeout(2000);
+            html=await page.content();
+            $ = cheerio.load(html);
+            
+            if($('.sub-comment-more').html()!=null)
+            {
+                await page.click(".sub-comment-more");
+                await page.waitForTimeout(2000);
+                html=await page.content();
+                $ = cheerio.load(html);
+            }
+            await Promise.all($(".comment-list").each(function(i, elem) {
+                let obj={};
+                obj.time=$(this).find(".time").text();
+                obj.content=$(this).find(".comment-txt").text();
+                obj.title=doc.title;
+                obj.url=doc.url;
+                let data = new mongo.Comment(obj);
+                data.save();
+            }))
+            await Promise.all($(".sub-comment").each(function(i, elem) {
+                $(this).children().each(function(j, el) {
+                    let obj={};
+                    obj.time=$(el).find(".sub-time").text();
+                    obj.content=$(el).find(".sub-comment-txt").text();
+                    obj.title=doc.title;
+                    obj.url=doc.url;
+                    let data = new mongo.Comment(obj);
+                    data.save();
+                    
+                })
+                
+            }))
+
+
+        
+        }
+        
         await browser.close();
-      })();
+        if(num<271)
+            get(num+10);
+      };
+    
+        get(63);
     res.send('ok');
 })
